@@ -1,0 +1,45 @@
+name: devops-machine-test
+
+services:
+  app:
+    image: devops-machine-test:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    command: npm start
+    container_name: devops-machine-test
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+
+    # Docker Compose v2+ live reload support
+    develop:
+      watch:
+        - path: ./index.js
+          target: /app/index.js
+          action: sync
+
+        - path: ./src
+          target: /app/src
+          action: sync
+          ignore:
+            - node_modules/
+
+        - path: package.json
+          action: rebuild
+
+        - path: package-lock.json
+          action: rebuild
+
+    volumes:
+      # Prevent node_modules overwrite
+      - /app/node_modules
+
+    networks:
+      - devops-machine-test
+
+networks:
+  devops-machine-test:
+    driver: bridge
