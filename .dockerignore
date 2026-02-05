@@ -12,3 +12,5 @@ README.md
 *.log
 coverage
 .scannerwork
+server-configs
+k8s

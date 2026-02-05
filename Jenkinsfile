@@ -35,6 +35,7 @@ pipeline {
                             AWS_ACCOUNT_ID: "${APP_NAME_DEV_AWS_ACCOUNT_ID}",
                             DOCKER_IMAGE_NAME: "${APP_NAME_DEV_DOCKER_IMAGE_NAME}",
                             SERVER_IP: "${APP_NAME_DEV_SERVER_IP}",
+                            AWS_SECRET_MANAGER: "${APP_NAME_DEV_SECRET_MANAGER}",
                             AWS_CREDENTIALS: "APP_NAME_DEV",
                             CONFIG_FOLDER: "main"
                         ]
@@ -46,6 +47,7 @@ pipeline {
                     env.AWS_ACCOUNT_ID = envConfig.AWS_ACCOUNT_ID
                     env.DOCKER_IMAGE_NAME = envConfig.DOCKER_IMAGE_NAME
                     env.SERVER_IP = envConfig.SERVER_IP
+                    env.AWS_SECRET_MANAGER = envConfig.AWS_SECRET_MANAGER
                     env.AWS_CREDENTIALS = envConfig.AWS_CREDENTIALS
                     env.CONFIG_FOLDER = envConfig.CONFIG_FOLDER
                     
@@ -302,7 +304,7 @@ def restartContainers(server) {
     sh """
         ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 ubuntu@${server} -t "
             cd /home/ubuntu/${env.APP_NAME} && \
-            docker compose -f docker-compose.yml up -d --force-recreate --build && \
+            docker compose -f docker-compose.yml up -d && \
             docker image prune -a -f
         "
     """

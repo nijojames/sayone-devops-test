@@ -4,7 +4,7 @@ A production-ready DevOps pipeline demonstration featuring a Node.js application
 
 ## Project Overview
 
-This project demonstrates a production-ready DevOps pipeline for a Node.js application with:
+This project demonstrates a production-ready jenkins multi-branch pipeline for a Node.js application with:
 
 - Simple Node.js/Express application with health endpoints
 - Optimized Docker containerization with multi-stage builds
@@ -39,7 +39,7 @@ This project demonstrates a production-ready DevOps pipeline for a Node.js appli
 |-----------|------------|
 | **Application** | Node.js 24.13.0 (Alpine Linux) |
 | **Framework** | Express.js 4.18.2 |
-| **Reverse Proxy** | Nginx 1.27 (Alpine) |
+| **Reverse Proxy** | Nginx 1.28 (Alpine) |
 | **Containerization** | Docker (multi-stage builds) |
 | **Orchestration** | Docker Compose |
 | **CI/CD** | Jenkins with Pipeline as Code |
@@ -107,6 +107,11 @@ This project demonstrates a production-ready DevOps pipeline for a Node.js appli
 ├── .dockerignore          # Docker build exclusions
 ├── env.example            # Example environment variables
 ├── Jenkinsfile            # CI/CD pipeline definition
+├── k8s-helm/            # Helm chart configuration
+│   ├── Chart.yaml         # Chart metadata
+│   ├── values.yaml        # Default values
+│   ├── templates/         # Kubernetes manifest templates
+│   └── README.md          # Chart documentation
 ├── server-configs/        # Production server configuration
 │   ├── nginx.conf         # Nginx reverse proxy config
 │   ├── Dockerfile.nginx   # Nginx Docker image
@@ -137,32 +142,46 @@ The `server-configs/` directory contains production deployment files:
 
 ### Quick Start
 
-1. **Clone the repository**
+**Clone the repository**
 
 ```bash
 git clone <repository-url>
 cd devops-machine-test-0304
 ```
 
-1. **Create environment file**
+**Create environment file**
 
 ```bash
 cp env.example .env
 # Edit .env with your configuration
 ```
 
-1. **Run with Docker Compose**
+**Run with Docker Compose**
+
+Development with Live Reload, Docker Compose v2+ includes live reload support:
 
 ```bash
-docker compose up --build
+docker compose up --watch --build
 ```
 
-1. **Access the application**
+This will automatically sync changes to `index.js` and `src/` directory.
+
+**Access the application**
 
 - Main endpoint: <http://localhost:3000>
 - Health check: <http://localhost:3000/health>
 
-1. **Access via domain**
+### Running npm install Inside development Container
+
+If you need to install new dependencies inside a running container:
+
+```bash
+docker compose exec app npm install <package-name>
+```
+
+## Nginx Configuration
+
+**Access via domain**
 
 - Main endpoint: <http://devopsmachinetest.com>
 - Health check: <http://devopsmachinetest.com/health>
@@ -191,25 +210,6 @@ The Nginx configuration includes SSL/HTTPS support via Let's Encrypt (Certbot), 
    ```bash
    docker compose --profile certbot run certbot certonly --webroot -w /var/www/certbot -d yourdomain.com
    ```
-
-### Running npm install Inside Container
-
-If you need to install new dependencies inside a running container:
-
-```bash
-# For development container
-docker compose exec app npm install <package-name>
-
-
-### Development with Live Reload
-
-Docker Compose v2+ includes live reload support:
-
-```bash
-docker compose watch
-```
-
-This will automatically sync changes to `index.js` and `src/` directory.
 
 ## 🐳 Docker Configuration
 
@@ -244,7 +244,7 @@ docker run -p 3000:3000 devops-machine-test:prod
 
 ## ☁️ AWS Deployment
 
-### Prerequisites
+### AWS Prerequisites
 
 1. **AWS Resources**
     - ECR repository created
@@ -257,7 +257,7 @@ docker run -p 3000:3000 devops-machine-test:prod
     - Required plugins: Pipeline, AWS Steps, Slack Notification
     - SSH key configured for EC2 access
 
-#### Jenkins Configuration
+#### Jenkins Pipeline Setup
 
 **Environment Variables** (Manage Jenkins → System → Global properties → Environment variables):
 
@@ -394,8 +394,30 @@ The pipeline sends notifications to `#jenkins-builds` channel:
 - 🟢 Green: Success
 - 🔴 Red: Failure (includes build URL)
 
-### Health Checks
+## ☸️ Kubernetes Deployment
 
-- Endpoint: `GET /health`
-- Expected response: `200 OK` with body `healthy`
-- Used by deployment pipeline for validation
+This project includes production-ready Kubernetes manifests for deploying to any Kubernetes cluster (EKS, GKE, AKS, or self-managed).
+
+### Features
+
+- ✅ **Security**: Non-root user, read-only filesystem, network policies, pod security contexts
+- ✅ **High Availability**: 2 replicas, Pod Disruption Budget, rolling updates
+- ✅ **Auto-scaling**: Horizontal Pod Autoscaler (2-5 replicas based on CPU/memory)
+- ✅ **Health Checks**: Liveness and readiness probes using `/health` endpoint
+- ✅ **Secrets Management**: Kubernetes Secrets with base64 encoding
+- ✅ **Ingress**: Nginx Ingress Controller with security headers
+- ✅ **Resource Management**: CPU/memory requests and limits
+
+### Helm Chart Deployment (Recommended)
+
+For a more scalable and reusable deployment, use the provided Helm chart.
+
+```bash
+# Install the chart
+helm install devops-machine-test ./k8s-helm --namespace devops-machine-test --create-namespace
+
+# Upgrade
+helm upgrade devops-machine-test ./k8s-helm --namespace devops-machine-test
+```
+
+> 📖 **Helm Documentation**: See [k8s-helm/README.md](k8s-helm/README.md) for configuration options.
