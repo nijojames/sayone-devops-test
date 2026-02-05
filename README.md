@@ -2,7 +2,7 @@
 
 ## Overview
 
-A production-ready Jenkins multi-branch pipeline for a Node.js application with automated CI/CD using Jenkins, Docker, and AWS.
+A production-ready Jenkins multi-branch pipeline for a Node.js application.
 
 ## 🛠️ Technology Stack
 
